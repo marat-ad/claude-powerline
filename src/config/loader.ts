@@ -50,6 +50,17 @@ export interface LineConfig {
   };
 }
 
+export interface PowerlineStyleConfig {
+  separator?: string;
+  start?: string;
+  end?: string;
+}
+
+export interface CapsuleStyleConfig {
+  left?: string;
+  right?: string;
+}
+
 export interface DisplayConfig {
   lines: LineConfig[];
   style?: "minimal" | "powerline" | "capsule" | "tui";
@@ -60,6 +71,8 @@ export interface DisplayConfig {
   padding?: number;
   showIcons?: boolean;
   tui?: TuiGridConfig;
+  powerline?: PowerlineStyleConfig;
+  capsule?: CapsuleStyleConfig;
 }
 
 export interface BudgetItemConfig {
@@ -119,6 +132,19 @@ function isValidStyle(
 
 function isValidCharset(charset: string): charset is "unicode" | "text" {
   return charset === "unicode" || charset === "text";
+}
+
+function validateStringFields<T extends object>(
+  obj: T,
+  keys: Array<keyof T>,
+): string | null {
+  for (const key of keys) {
+    const value = obj[key];
+    if (value !== undefined && typeof value !== "string") {
+      return `"${String(key)}" must be a string`;
+    }
+  }
+  return null;
 }
 
 function getArgValue(args: string[], argName: string): string | undefined {
@@ -468,6 +494,33 @@ export function loadConfig(
         `Warning: invalid grid config: ${error}. Falling back to hardcoded layout.\n`,
       );
       delete config.display.tui;
+    }
+  }
+
+  if (config.display?.powerline) {
+    const error = validateStringFields(config.display.powerline, [
+      "separator",
+      "start",
+      "end",
+    ]);
+    if (error) {
+      console.warn(
+        `Warning: invalid display.powerline config: ${error}. Ignoring.`,
+      );
+      delete config.display.powerline;
+    }
+  }
+
+  if (config.display?.capsule) {
+    const error = validateStringFields(config.display.capsule, [
+      "left",
+      "right",
+    ]);
+    if (error) {
+      console.warn(
+        `Warning: invalid display.capsule config: ${error}. Ignoring.`,
+      );
+      delete config.display.capsule;
     }
   }
 

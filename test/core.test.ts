@@ -457,4 +457,67 @@ describe("Core Functionality", () => {
       expect(result).toBeNull();
     });
   });
+
+  describe("Style Symbol Configuration", () => {
+    function buildConfig(overrides: Record<string, unknown>) {
+      const config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+      config.display = { ...config.display, ...overrides };
+      return config;
+    }
+
+    function buildHookData() {
+      return {
+        session_id: "test-session",
+        transcript_path: join(tempDir, "nonexistent.jsonl"),
+        workspace: {
+          project_dir: tempDir,
+          current_dir: tempDir,
+        },
+        model: { id: "claude-3-5-sonnet", display_name: "Claude" },
+        cwd: tempDir,
+        hook_event_name: "test",
+      };
+    }
+
+    it("should use the default powerline arrow as separator and line end", async () => {
+      const config = buildConfig({ style: "powerline" });
+      const renderer = new PowerlineRenderer(config);
+      const result = await renderer.generateStatusline(buildHookData());
+      expect(result).toContain("");
+    });
+
+    it("should use custom powerline separator/start/end symbols", async () => {
+      const config = buildConfig({
+        style: "powerline",
+        powerline: { separator: ">>", start: "[[", end: "]]" },
+      });
+      const renderer = new PowerlineRenderer(config);
+      const result = await renderer.generateStatusline(buildHookData());
+      expect(result).toContain(">>");
+      expect(result).toContain("[[");
+      expect(result).toContain("]]");
+      expect(result).not.toContain("");
+    });
+
+    it("should use the default rounded caps for capsule style", async () => {
+      const config = buildConfig({ style: "capsule" });
+      const renderer = new PowerlineRenderer(config);
+      const result = await renderer.generateStatusline(buildHookData());
+      expect(result).toContain("");
+      expect(result).toContain("");
+    });
+
+    it("should use custom capsule left/right symbols", async () => {
+      const config = buildConfig({
+        style: "capsule",
+        capsule: { left: "(", right: ")" },
+      });
+      const renderer = new PowerlineRenderer(config);
+      const result = await renderer.generateStatusline(buildHookData());
+      expect(result).toContain("(");
+      expect(result).toContain(")");
+      expect(result).not.toContain("");
+      expect(result).not.toContain("");
+    });
+  });
 });

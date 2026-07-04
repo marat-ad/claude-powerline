@@ -669,6 +669,55 @@ The charset setting works independently from separator styles, giving you 8 poss
 </details>
 
 <details>
+<summary><strong>Custom Separator and Capsule Symbols</strong></summary>
+
+Override the glyphs used by the `powerline` and `capsule` styles. Configured alongside `style` in `display`; each block only applies when `display.style` matches it.
+
+For `style: "powerline"`:
+
+```json
+{
+  "display": {
+    "style": "powerline",
+    "powerline": {
+      "separator": "",
+      "start": "",
+      "end": ""
+    }
+  }
+}
+```
+
+| Property | Default | Description |
+|---|---|---|
+| `separator` | `` (``) | Symbol between segments |
+| `start` | `""` | Symbol before the first segment |
+| `end` | `` (``) | Symbol after the last segment |
+
+For `style: "capsule"`:
+
+```json
+{
+  "display": {
+    "style": "capsule",
+    "capsule": {
+      "left": "",
+      "right": ""
+    }
+  }
+}
+```
+
+| Property | Default | Description |
+|---|---|---|
+| `left` | `` (``) | Left cap of each segment |
+| `right` | `` (``) | Right cap of each segment |
+
+Only specify the symbols you want to change; the rest fall back to the active charset's defaults. These options are config-file only (no CLI flag or environment variable).
+
+</details>
+
+<details>
 <summary><strong>Layout: Auto-Wrap, Multi-line, and Padding</strong></summary>
 
 **Auto-Wrap** (enabled by default):

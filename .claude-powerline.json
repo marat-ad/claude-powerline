@@ -3,6 +3,10 @@
   "display": {
     "padding": 1,
     "style": "capsule",
+    "capsule": {
+      "left": "░▒▓",
+      "right": "▓▒░"
+    },
     "charset": "unicode",
     "colorCompatibility": "auto",
     "autoWrap": true,

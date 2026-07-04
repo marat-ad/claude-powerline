@@ -450,11 +450,18 @@ export class PowerlineRenderer {
     const paddingWidth = padding * 2;
 
     if (isCapsuleStyle) {
-      const capsuleOverhead = 2 + paddingWidth + (isFirst ? 0 : 1);
+      const capsWidth =
+        visibleLength(this.symbols.left) + visibleLength(this.symbols.right);
+      const capsuleOverhead = capsWidth + paddingWidth + (isFirst ? 0 : 1);
       return textWidth + capsuleOverhead;
     }
 
-    const powerlineOverhead = 1 + paddingWidth;
+    const trailingWidth = Math.max(
+      visibleLength(this.symbols.separator),
+      visibleLength(this.symbols.lineEnd),
+    );
+    const startWidth = isFirst ? visibleLength(this.symbols.lineStart) : 0;
+    const powerlineOverhead = trailingWidth + paddingWidth + startWidth;
     return textWidth + powerlineOverhead;
   }
 
@@ -487,6 +494,7 @@ export class PowerlineRenderer {
         nextSegment?.bgColor,
         colors,
         bold,
+        isFirst,
       );
     }
 
@@ -799,17 +807,26 @@ export class PowerlineRenderer {
   private initializeSymbols(): PowerlineSymbols {
     const style = this.config.display.style;
     const charset = this.config.display.charset || "unicode";
-    const isMinimalStyle = style === "minimal";
     const isCapsuleStyle = style === "capsule";
+    const isPowerlineStyle = style === "powerline";
     const symbolSet = charset === "text" ? TEXT_SYMBOLS : SYMBOLS;
+    const powerlineConfig = this.config.display.powerline;
+    const capsuleConfig = this.config.display.capsule;
 
     return {
-      right: isMinimalStyle
-        ? ""
-        : isCapsuleStyle
-          ? symbolSet.right_rounded
-          : symbolSet.right,
-      left: isCapsuleStyle ? symbolSet.left_rounded : "",
+      right: isCapsuleStyle
+        ? (capsuleConfig?.right ?? symbolSet.right_rounded)
+        : "",
+      left: isCapsuleStyle
+        ? (capsuleConfig?.left ?? symbolSet.left_rounded)
+        : "",
+      separator: isPowerlineStyle
+        ? (powerlineConfig?.separator ?? symbolSet.right)
+        : "",
+      lineStart: isPowerlineStyle ? (powerlineConfig?.start ?? "") : "",
+      lineEnd: isPowerlineStyle
+        ? (powerlineConfig?.end ?? symbolSet.right)
+        : "",
       branch: symbolSet.branch,
       model: symbolSet.model,
       git_clean: symbolSet.git_clean,
@@ -1107,18 +1124,18 @@ export class PowerlineRenderer {
     nextBgColor: string | undefined,
     colors: PowerlineColors,
     bold: boolean,
+    isFirst: boolean,
   ): string {
     const isCapsuleStyle = this.config.display.style === "capsule";
     const padding = " ".repeat(this.config.display.padding ?? 1);
     const useBold = bold && colors.reset !== "";
     const boldOn = useBold ? "\x1b[1m" : "";
     const boldOff = useBold ? "\x1b[22m" : "";
+    const colorMode = this.config.display.colorCompatibility || "auto";
+    const colorSupport = colorMode === "auto" ? getColorSupport() : colorMode;
+    const isBasicMode = colorSupport === "ansi";
 
     if (isCapsuleStyle) {
-      const colorMode = this.config.display.colorCompatibility || "auto";
-      const colorSupport = colorMode === "auto" ? getColorSupport() : colorMode;
-      const isBasicMode = colorSupport === "ansi";
-
       const capFgColor = extractBgToFg(bgColor, isBasicMode);
 
       const leftCap = `${capFgColor}${this.symbols.left}${colors.reset}`;
@@ -1130,17 +1147,20 @@ export class PowerlineRenderer {
       return `${leftCap}${content}${rightCap}`;
     }
 
-    let output = `${bgColor}${fgColor}${boldOn}${padding}${text}${padding}${boldOff}`;
+    let output = "";
 
-    const colorMode = this.config.display.colorCompatibility || "auto";
-    const colorSupport = colorMode === "auto" ? getColorSupport() : colorMode;
-    const isBasicMode = colorSupport === "ansi";
+    if (isFirst && this.symbols.lineStart) {
+      const startFgColor = extractBgToFg(bgColor, isBasicMode);
+      output += `${startFgColor}${this.symbols.lineStart}${colors.reset}`;
+    }
+
+    output += `${bgColor}${fgColor}${boldOn}${padding}${text}${padding}${boldOff}`;
 
     if (nextBgColor) {
       const arrowFgColor = extractBgToFg(bgColor, isBasicMode);
-      output += `${colors.reset}${nextBgColor}${arrowFgColor}${this.symbols.right}`;
+      output += `${colors.reset}${nextBgColor}${arrowFgColor}${this.symbols.separator}`;
     } else {
-      output += `${colors.reset}${extractBgToFg(bgColor, isBasicMode)}${this.symbols.right}${colors.reset}`;
+      output += `${colors.reset}${extractBgToFg(bgColor, isBasicMode)}${this.symbols.lineEnd}${colors.reset}`;
     }
 
     return output;

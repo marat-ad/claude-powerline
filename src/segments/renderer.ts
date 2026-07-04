@@ -198,6 +198,9 @@ export type AnySegmentConfig =
 export interface PowerlineSymbols {
   right: string;
   left: string;
+  separator: string;
+  lineStart: string;
+  lineEnd: string;
   branch: string;
   model: string;
   git_clean: string;

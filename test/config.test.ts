@@ -484,4 +484,68 @@ describe("config", () => {
       expect(stderrSpy).not.toHaveBeenCalled();
     });
   });
+
+  describe("powerline/capsule symbol config validation", () => {
+    let consoleSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      consoleSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      consoleSpy.mockRestore();
+    });
+
+    function loadWithDisplay(display: Record<string, unknown>) {
+      mockFs.existsSync.mockImplementation(
+        (p) => p === path.join("/project", ".claude-powerline.json")
+      );
+      mockFs.readFileSync.mockReturnValue(JSON.stringify({ display }));
+      return loadConfig();
+    }
+
+    it("should accept valid powerline symbol overrides", () => {
+      const config = loadWithDisplay({
+        style: "powerline",
+        powerline: { separator: ">", start: "[", end: "]" },
+      });
+      expect(config.display.powerline).toEqual({
+        separator: ">",
+        start: "[",
+        end: "]",
+      });
+      expect(consoleSpy).not.toHaveBeenCalled();
+    });
+
+    it("should accept valid capsule symbol overrides", () => {
+      const config = loadWithDisplay({
+        style: "capsule",
+        capsule: { left: "(", right: ")" },
+      });
+      expect(config.display.capsule).toEqual({ left: "(", right: ")" });
+      expect(consoleSpy).not.toHaveBeenCalled();
+    });
+
+    it("should reject non-string powerline symbol values", () => {
+      const config = loadWithDisplay({
+        style: "powerline",
+        powerline: { separator: 5 },
+      });
+      expect(config.display.powerline).toBeUndefined();
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("invalid display.powerline config")
+      );
+    });
+
+    it("should reject non-string capsule symbol values", () => {
+      const config = loadWithDisplay({
+        style: "capsule",
+        capsule: { left: false },
+      });
+      expect(config.display.capsule).toBeUndefined();
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("invalid display.capsule config")
+      );
+    });
+  });
 });
